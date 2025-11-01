@@ -25,6 +25,40 @@ class RndroidAdvanceBatteryModule(reactContext: ReactApplicationContext) :
         return reactApplicationContext.registerReceiver(null, filter)
     }
 
+    private fun getDesignBatteryCapacity(context: Context): Double {
+        try {
+            val powerProfileClass = Class.forName("com.android.internal.os.PowerProfile")
+            val powerProfile = powerProfileClass
+                .getConstructor(Context::class.java)
+                .newInstance(context)
+
+            // The method to get the capacity is called "getBatteryCapacity" or "getAveragePower"
+            // and uses the string "battery.capacity".
+            // The return value is in mAh.
+            val method = powerProfileClass.getMethod("getAveragePower", String::class.java)
+            
+            // Invoke the method to get the value
+            val batteryCapacity = method.invoke(powerProfile, "battery.capacity") as Double
+            
+            // This value is usually the manufacturer's stated capacity (e.g., 4600.0)
+            return batteryCapacity
+        } catch (e: Exception) {
+            return 0.0 // Indicate failure
+        }
+    }
+
+    private fun calCapacity(totalCapacity : Double) : Double {
+        val batteryStatus = getBatteryIntent()
+        val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        val scale = batteryStatus?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
+        if (level < 0 || scale <= 0) {
+            return 0.0
+        }
+        val batteryPct = (level / scale.toFloat()) * 100 
+
+        return (totalCapacity * batteryPct) / 100.0
+    }
+
     override fun getLevel(promise: Promise) {
         try {
             val batteryStatus = getBatteryIntent()
@@ -137,6 +171,63 @@ class RndroidAdvanceBatteryModule(reactContext: ReactApplicationContext) :
             promise.resolve(wattage)
         } catch (e: Exception) {
             promise.reject("BATTERY_WATTAGE_ERROR", "Failed to get battery wattage", e)
+        }
+    }
+
+    override fun getTotalCapacity(promise: Promise) {
+        try {
+            val designCapacity = getDesignBatteryCapacity(reactApplicationContext)
+
+            if (designCapacity > 0) {
+                // Resolve with the design capacity (e.g., 4600.0)
+                promise.resolve(designCapacity)
+            } else {
+                val chargeCounter = batteryManager.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+                val capacityPercent = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+
+                if (chargeCounter > 0 && capacityPercent > 0) {
+                    val fullCapacityMicroAh = (chargeCounter.toDouble() / (capacityPercent.toDouble() / 100.0))
+                    val fullCapacityMilliAh = fullCapacityMicroAh / 1000.0
+                    
+                    promise.resolve(fullCapacityMilliAh)
+                } else {
+                    promise.reject(
+                        "E_UNSUPPORTED_PROPERTY", 
+                        "Device does not report battery properties, and reflection for design capacity failed."
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            promise.reject("BATTERY_TOTAL_CAPACITY_ERROR", "Failed to get total capacity", e)
+        }
+    }
+
+    override fun getChargedCapacity(promise: Promise) {
+        try {
+            val designCapacity = getDesignBatteryCapacity(reactApplicationContext)
+
+            if (designCapacity > 0) {
+                val cap = calCapacity(designCapacity);
+                promise.resolve(cap)
+            } else {
+                val chargeCounter = batteryManager.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+                val capacityPercent = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+
+                if (chargeCounter > 0 && capacityPercent > 0) {
+                    val fullCapacityMicroAh = (chargeCounter.toDouble() / (capacityPercent.toDouble() / 100.0))
+                    val fullCapacityMilliAh = fullCapacityMicroAh / 1000.0
+                    val calculatedCap = calCapacity(fullCapacityMilliAh);
+
+                    promise.resolve(calculatedCap)
+                } else {
+                    promise.reject(
+                        "E_UNSUPPORTED_PROPERTY", 
+                        "Device does not report battery properties, and reflection for capacity failed."
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            promise.reject("BATTERY_CHARGED_CAPACITY_ERROR", "Failed to get charged capacity", e)
         }
     }
 

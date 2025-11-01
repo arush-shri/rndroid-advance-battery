@@ -9,6 +9,8 @@ export const isCharging = () => RndroidAdvanceBattery.isCharging();
 export const getCurrent = () => RndroidAdvanceBattery.getCurrent();
 export const getVoltage = () => RndroidAdvanceBattery.getVoltage();
 export const getWattage = () => RndroidAdvanceBattery.getWattage();
+export const getTotalCapacity = () => RndroidAdvanceBattery.getTotalCapacity();
+export const getChargedCapacity = () => RndroidAdvanceBattery.getChargedCapacity();
 
 const Battery = {
     getLevel,
@@ -20,6 +22,8 @@ const Battery = {
     getCurrent,
     getVoltage,
     getWattage,
+    getTotalCapacity,
+    getChargedCapacity,
 };
 
 export default Battery;

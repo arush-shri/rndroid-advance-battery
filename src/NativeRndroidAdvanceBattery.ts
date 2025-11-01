@@ -10,6 +10,8 @@ export interface Spec extends TurboModule {
     getCurrent(): Promise<number>;
     getVoltage(): Promise<number>;
     getWattage(): Promise<number>;
+    getTotalCapacity(): Promise<number>;
+    getChargedCapacity(): Promise<number>;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>('RndroidAdvanceBattery');
