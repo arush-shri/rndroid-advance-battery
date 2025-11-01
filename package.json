@@ -1,6 +1,6 @@
 {
   "name": "rndroid-advance-battery",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "An android only advance react native package that returns battery related data like percentage, voltage, ampere, wattage and more",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
