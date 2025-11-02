@@ -147,7 +147,7 @@ async function logBatteryInfo() {
 logBatteryInfo();
 ```
 
-### 📘 Quick Reference
+## 📘 Quick Reference
 
 | Method               | Returns | Unit / Type | Description                |
 | -------------------- | ------- | ----------- | -------------------------- |
@@ -162,3 +162,7 @@ logBatteryInfo();
 | getWattage()         | number  | W           | Power draw                 |
 | getTotalCapacity()   | number  | mAh         | Total design capacity      |
 | getChargedCapacity() | number  | mAh         | Current charged capacity   |
+
+## License
+
+MIT
